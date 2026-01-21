@@ -15,19 +15,22 @@ class AppProvider with ChangeNotifier {
   Set<String> _favoriteIds = {};
   bool _isLoading = false;
   bool _isDarkMode = false; 
+  bool _isAdminAuthenticated = false;
+  String? _sessionToken;
 
   List<Category> get categories => _categories;
   List<AppBanner> get banners => _banners;
   List<Establishment> get featuredEstablishments => _featuredEstablishments;
   List<Establishment> get allEstablishments => _allEstablishments;
+  List<Establishment> get searchResults => _searchResults;
   Set<String> get favoriteIds => _favoriteIds;
   bool get isLoading => _isLoading;
   bool get isDarkMode => _isDarkMode;
+  bool get isAdminAuthenticated => _isAdminAuthenticated;
+  String? get sessionToken => _sessionToken;
 
   // Search Results
   List<Establishment> _searchResults = [];
-  List<Establishment> get searchResults => _searchResults;
-
 
   Future<void> initData() async {
     _isLoading = true;
@@ -189,5 +192,34 @@ class AppProvider with ChangeNotifier {
   Future<void> deleteEstablishment(String id) async {
     await _apiService.deleteEstablishment(id);
     await refresh();
+  }
+
+  // Auth
+  Future<bool> login(String email, String password) async {
+    _isLoading = true;
+    notifyListeners();
+    
+    final responseData = await _apiService.login(email, password);
+    
+    if (responseData != null && responseData['success'] == true) {
+      _isAdminAuthenticated = true;
+      final data = responseData['data'];
+      if (data != null && data['session_token'] != null) {
+        _sessionToken = data['session_token'];
+        // In a real app, store this in LocalStorage
+      }
+    } else {
+      _isAdminAuthenticated = false;
+    }
+    
+    _isLoading = false;
+    notifyListeners();
+    return _isAdminAuthenticated;
+  }
+
+  void logout() {
+    _isAdminAuthenticated = false;
+    _sessionToken = null;
+    notifyListeners();
   }
 }

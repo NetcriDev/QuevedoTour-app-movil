@@ -8,8 +8,8 @@ class ApiService {
 
   ApiService() {
     _dio.options.baseUrl = AppConstants.apiBaseUrl; // e.g. http://10.10.10.20:3000/api
-    _dio.options.connectTimeout = const Duration(seconds: 5);
-    _dio.options.receiveTimeout = const Duration(seconds: 5);
+    _dio.options.connectTimeout = const Duration(seconds: 15);
+    _dio.options.receiveTimeout = const Duration(seconds: 15);
     
     if (kDebugMode) {
       _dio.interceptors.add(LogInterceptor(responseBody: true, requestBody: true));
@@ -78,7 +78,7 @@ class ApiService {
 
   Future<List<Establishment>> getEstablishments() async {
     try {
-      final response = await _dio.get('/products/habitacion'); 
+      final response = await _dio.get('/establishments/getAll'); 
       if (response.statusCode == 200 || response.statusCode == 201) {
         final List<dynamic> data = response.data;
         return data.map((json) => Establishment.fromJson(json)).toList();
@@ -92,7 +92,7 @@ class ApiService {
   
   Future<List<Establishment>> getRecentEstablishments() async {
      try {
-      final response = await _dio.get('/products/listProductsRecentAdd'); 
+      final response = await _dio.get('/establishments/listRecentAdd'); 
       if (response.statusCode == 200 || response.statusCode == 201) {
         final List<dynamic> data = response.data;
         return data.map((json) => Establishment.fromJson(json)).toList();
@@ -176,7 +176,7 @@ class ApiService {
 
   Future<bool> deleteEstablishment(String id) async {
      try {
-       await _dio.delete('/products/eliminar/$id');
+       await _dio.delete('/establishments/delete/$id');
        return true;
      } catch(e) {
        return false;
@@ -195,5 +195,23 @@ class ApiService {
      } catch(e) {
        return false;
      }
+  }
+  // --- AUTH METHODS ---
+
+  Future<Map<String, dynamic>?> login(String email, String password) async {
+    try {
+      final response = await _dio.post('/users/login', data: {
+        'email': email,
+        'password': password,
+      });
+      
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        return response.data;
+      }
+      return null;
+    } catch (e) {
+      debugPrint('Login error: $e');
+      return null;
+    }
   }
 }

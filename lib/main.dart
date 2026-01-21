@@ -27,26 +27,15 @@ class QuevedoTourApp extends StatelessWidget {
       providers: [
         ChangeNotifierProvider(create: (_) => AppProvider()..initData()),
       ],
-      child: Consumer<AppProvider>(
-        builder: (context, provider, child) {
-          return MaterialApp(
-            title: 'QuevedoTour',
-            debugShowCheckedModeBanner: false,
-            theme: AppTheme.lightTheme, // Optionally use provider.isDarkMode
-            darkTheme: AppTheme.darkTheme,
-            themeMode: ThemeMode.system, // For now system default
-            home: const HomeScreen(), // Placeholder until created
-            routes: {
-              '/admin': (context) => const AdminPanel(),
-              // Detail screen usually passed via arguments or constructor, but can have named route
-            },
-            onGenerateRoute: (settings) {
-              if (settings.name == '/detail') {
-                 // handle passing arguments
-              }
-              return null;
-            },
-          );
+      child: MaterialApp(
+        title: 'QuevedoTour',
+        debugShowCheckedModeBanner: false,
+        theme: AppTheme.lightTheme,
+        darkTheme: AppTheme.darkTheme,
+        themeMode: ThemeMode.system,
+        home: const HomeScreen(),
+        routes: {
+          '/admin': (context) => const AdminPanel(),
         },
       ),
     );
