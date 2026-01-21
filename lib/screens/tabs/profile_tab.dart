@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import '../../providers/app_provider.dart';
 import '../admin/admin_panel.dart';
 
 class ProfileTab extends StatelessWidget {
@@ -60,36 +62,75 @@ class ProfileTab extends StatelessWidget {
   void _showLoginDialog(BuildContext context) {
     final emailController = TextEditingController();
     final passController = TextEditingController();
+    final appProvider = Provider.of<AppProvider>(context, listen: false);
 
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        title: const Text("Acceso Admin"),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            TextField(controller: emailController, decoration: const InputDecoration(labelText: 'Email')),
-            TextField(controller: passController, decoration: const InputDecoration(labelText: 'Password'), obscureText: true),
+      barrierDismissible: false,
+      builder: (context) => Consumer<AppProvider>(
+        builder: (context, provider, child) => AlertDialog(
+          title: const Text("Acceso Admin"),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextField(
+                controller: emailController,
+                decoration: const InputDecoration(labelText: 'Email'),
+                keyboardType: TextInputType.emailAddress,
+                enabled: !provider.isLoading,
+              ),
+              TextField(
+                controller: passController,
+                decoration: const InputDecoration(labelText: 'Password'),
+                obscureText: true,
+                enabled: !provider.isLoading,
+              ),
+              if (provider.isLoading)
+                const Padding(
+                  padding: EdgeInsets.only(top: 16.0),
+                  child: CircularProgressIndicator(),
+                ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: provider.isLoading ? null : () => Navigator.pop(context),
+              child: const Text("Cancelar"),
+            ),
+            ElevatedButton(
+              onPressed: provider.isLoading
+                  ? null
+                  : () async {
+                      final email = emailController.text.trim();
+                      final pass = passController.text.trim();
+
+                      if (email.isEmpty || pass.isEmpty) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(content: Text('Por favor ingrese credenciales')),
+                        );
+                        return;
+                      }
+
+                      final success = await provider.login(email, pass);
+
+                      if (context.mounted) {
+                        if (success) {
+                          Navigator.pop(context);
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(builder: (_) => const AdminPanel()),
+                          );
+                        } else {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(content: Text('Credenciales incorrectas o error de conexión')),
+                          );
+                        }
+                      }
+                    },
+              child: const Text("Ingresar"),
+            ),
           ],
         ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text("Cancelar"),
-          ),
-          ElevatedButton(
-            onPressed: () {
-              // Mock Auth
-              if (emailController.text == 'admin' && passController.text == 'admin') {
-                Navigator.pop(context);
-                Navigator.push(context, MaterialPageRoute(builder: (_) => const AdminPanel()));
-              } else {
-                ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Credenciales incorrectas (admin/admin)')));
-              }
-            },
-            child: const Text("Ingresar"),
-          ),
-        ],
       ),
     );
   }
