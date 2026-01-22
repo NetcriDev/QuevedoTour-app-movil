@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 import '../config/constants.dart';
@@ -40,15 +41,30 @@ class ReviewsService {
     List<String> images = const [],
   }) async {
     try {
+      final Map<String, dynamic> reviewData = {
+        'id_establishment': establishmentId,
+        'id_user': userId,
+        'rating': rating,
+        'comment': comment,
+      };
+
+      final FormData formData = FormData.fromMap({
+        'review': jsonEncode(reviewData),
+      });
+
+      // Add images if any and if they are local paths
+      for (var imagePath in images) {
+        if (!imagePath.startsWith('http')) {
+          formData.files.add(MapEntry(
+            'image',
+            await MultipartFile.fromFile(imagePath),
+          ));
+        }
+      }
+
       final response = await _dio.post(
         '/reviews/create',
-        data: {
-          'id_establishment': establishmentId,
-          'id_user': userId,
-          'rating': rating,
-          'comment': comment,
-          'images': images,
-        },
+        data: formData,
         options: Options(
           headers: {'Authorization': sessionToken},
         ),
