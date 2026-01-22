@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/app_provider.dart';
+import '../providers/auth_provider.dart';
 import '../config/theme.dart';
 import 'home_screen.dart';
 import 'package:flutter_staggered_animations/flutter_staggered_animations.dart';
@@ -38,14 +39,15 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
   }
 
   Future<void> _navigateToHome() async {
-    // Start data initialization in the background if not already started
-    // The main.dart might already call it, but AppProvider.initData() handles loading state.
-    final provider = Provider.of<AppProvider>(context, listen: false);
+    // Initialize both AppProvider and AuthProvider in parallel
+    final appProvider = Provider.of<AppProvider>(context, listen: false);
+    final authProvider = Provider.of<AuthProvider>(context, listen: false);
     
-    // We wait for both: the data to be ready AND a minimum time for the splash to look good
+    // We wait for: auth init, data init, AND minimum splash time
     await Future.wait([
-      provider.initData(),
-      Future.delayed(const Duration(seconds: 3)),
+      authProvider.init(), // Initialize auth session
+      appProvider.initData(), // Load app data
+      Future.delayed(const Duration(seconds: 3)), // Minimum splash time
     ]);
 
     if (!mounted) return;
