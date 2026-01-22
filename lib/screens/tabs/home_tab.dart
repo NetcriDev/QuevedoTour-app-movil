@@ -6,6 +6,7 @@ import '../../providers/app_provider.dart';
 import '../../models/models.dart';
 import '../../config/theme.dart';
 import '../../widgets/glass_card.dart';
+import '../../widgets/network_error_widget.dart';
 import '../detail_screen.dart';
 
 class HomeTab extends StatelessWidget {
@@ -17,6 +18,16 @@ class HomeTab extends StatelessWidget {
       builder: (context, provider, child) {
         if (provider.isLoading) {
           return const Center(child: CircularProgressIndicator());
+        }
+        
+        // Show network error if data failed to load
+        if (provider.hasNetworkError && 
+            provider.categories.isEmpty && 
+            provider.allEstablishments.isEmpty) {
+          return NetworkErrorWidget(
+            message: provider.errorMessage,
+            onRetry: () => provider.retryLoadData(),
+          );
         }
         
         return CustomScrollView(
