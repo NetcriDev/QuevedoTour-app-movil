@@ -46,8 +46,50 @@ class AppProvider with ChangeNotifier {
     _errorMessage = null;
     notifyListeners();
 
+    // 1. TRY TO LOAD FROM LOCAL CACHE FIRST
     try {
-      // Try to load data with timeout handling
+      final localCats = await _localStorage.getCategories();
+      final localSubs = await _localStorage.getSubCategories();
+      final localBanners = await _localStorage.getBanners();
+      final localEsts = await _localStorage.getEstablishments();
+      final localFavs = await _localStorage.getFavorites();
+
+      if (localCats.isNotEmpty || localEsts.isNotEmpty) {
+        debugPrint("--- LOADING FROM CACHE ---");
+        List<Category> rawCategories = localCats.map((json) => Category.fromJson(json)).toList();
+        List<SubCategory> allSubCategories = localSubs.map((json) => SubCategory.fromJson(json)).toList();
+        _banners = localBanners.map((json) => AppBanner.fromJson(json)).toList();
+        _allEstablishments = localEsts.map((json) => Establishment.fromJson(json)).toList();
+        _favoriteIds = localFavs.toSet();
+        
+        // Featured are just the first few for now or based on a flag
+        _featuredEstablishments = _allEstablishments.where((e) => e.isFeatured).toList();
+        if (_featuredEstablishments.isEmpty && _allEstablishments.isNotEmpty) {
+          _featuredEstablishments = _allEstablishments.take(5).toList();
+        }
+
+        // Stitch SubCategories into Categories
+        _categories = rawCategories.map((cat) {
+          final subs = allSubCategories.where((s) => s.parentId == cat.id).toList();
+          return Category(
+            id: cat.id,
+            name: cat.name,
+            icon: cat.icon,
+            subCategories: subs
+          );
+        }).toList();
+
+        // Initial UI update with cached data
+        _isLoading = false;
+        notifyListeners();
+      }
+    } catch (e) {
+      debugPrint("Error loading from local storage: $e");
+    }
+
+    // 2. FETCH FRESH DATA FROM API
+    try {
+      debugPrint("--- FETCHING FRESH DATA FROM API ---");
       final futures = await Future.wait([
         _apiService.getCategories(),
         _apiService.getAllSubCategories(),
@@ -56,20 +98,7 @@ class AppProvider with ChangeNotifier {
         _apiService.getEstablishments(),
         _localStorage.getFavorites(),
       ]).timeout(
-        const Duration(seconds: 35),
-        onTimeout: () {
-          debugPrint('Data loading timed out, using empty data');
-          _hasNetworkError = true;
-          _errorMessage = 'Tiempo de espera agotado. Verifica tu conexión.';
-          return [
-            <Category>[],
-            <SubCategory>[],
-            <AppBanner>[],
-            <Establishment>[],
-            <Establishment>[],
-            <String>[],
-          ];
-        },
+        const Duration(seconds: 15), // Reduced timeout as we have cache
       );
 
       List<Category> rawCategories = futures[0] as List<Category>;
@@ -79,21 +108,9 @@ class AppProvider with ChangeNotifier {
       _allEstablishments = futures[4] as List<Establishment>;
       _favoriteIds = (futures[5] as List<String>).toSet();
 
-      debugPrint("--- DATA LOADED ---");
-      debugPrint("Categories: ${rawCategories.length}");
-      debugPrint("SubCategories: ${allSubCategories.length}");
-      debugPrint("Banners: ${_banners.length}");
-      debugPrint("Featured Est: ${_featuredEstablishments.length}");
-      debugPrint("All Est: ${_allEstablishments.length}");
-
-      if (_allEstablishments.isNotEmpty) {
-         debugPrint("Sample Est: ${_allEstablishments[0].name}, CatID: ${_allEstablishments[0].categoryId}, SubCatID: ${_allEstablishments[0].subCategoryId}");
-      }
-      
       // Stitch SubCategories into Categories
       _categories = rawCategories.map((cat) {
         final subs = allSubCategories.where((s) => s.parentId == cat.id).toList();
-        debugPrint("Category ${cat.name} (ID: ${cat.id}) has ${subs.length} subcategories");
         return Category(
           id: cat.id,
           name: cat.name,
@@ -102,16 +119,25 @@ class AppProvider with ChangeNotifier {
         );
       }).toList();
 
-      // Check if we got any data
-      if (rawCategories.isEmpty && _allEstablishments.isEmpty && _banners.isEmpty) {
-        _hasNetworkError = true;
-        _errorMessage = 'No se pudo cargar la información. Verifica tu conexión.';
-      }
+      // 3. UPDATE LOCAL CACHE ON SUCCESS
+      await _localStorage.saveCategories(rawCategories.map((e) => e.toJson()).toList());
+      await _localStorage.saveSubCategories(allSubCategories.map((e) => e.toJson()).toList());
+      await _localStorage.saveBanners(_banners.map((e) => e.toJson()).toList());
+      await _localStorage.saveEstablishments(_allEstablishments.map((e) => e.toJson()).toList());
+
+      _hasNetworkError = false;
+      _errorMessage = null;
 
     } catch (e) {
       debugPrint("Error loading data from API: $e");
-      _hasNetworkError = true;
-      _errorMessage = 'Error al cargar datos. Intenta nuevamente.';
+      // Only show error if we have NO data at all
+      if (_categories.isEmpty && _allEstablishments.isEmpty) {
+        _hasNetworkError = true;
+        _errorMessage = 'Error al cargar datos. Verifica tu conexión.';
+      } else {
+        // We have cached data, so just log it and maybe show a snackbar elsewhere
+        _hasNetworkError = true; // Still mark as error but don't clear data
+      }
     } finally {
       _isLoading = false;
       notifyListeners();

@@ -37,6 +37,14 @@ class Category {
       subCategories: [], // Subcategories usually fetched separately or mapped if nested
     );
   }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'name': name,
+      'icon': icon.toString(), // Simplify for now
+    };
+  }
 }
 
 class SubCategory {
@@ -56,6 +64,14 @@ class SubCategory {
       name: json['name'] ?? '',
       parentId: json['id_category']?.toString() ?? '',
     );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'name': name,
+      'id_category': parentId,
+    };
   }
 }
 
@@ -147,6 +163,23 @@ class Establishment {
       isFeatured: false, // Default
     );
   }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'name': name,
+      'description': description,
+      'address': address,
+      'location': "$lat,$lng",
+      'rating': rating,
+      'images': galleryImages, // api_service handles the list
+      'id_category': categoryId,
+      'id_sub_category': subCategoryId,
+      'phone': phone,
+      'website': website,
+      'price': priceRange == '\$\$\$' ? 30 : (priceRange == '\$\$' ? 15 : 5), // Rough mapping back
+    };
+  }
 }
 
 class AppBanner {
@@ -169,5 +202,13 @@ class AppBanner {
       title: json['title'] ?? '',
       link: null, 
     );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'image': imageUrl,
+      'title': title,
+    };
   }
 }
