@@ -76,4 +76,32 @@ class Review {
       'is_synced': isSynced ? 1 : 0,
     };
   }
+
+  Review copyWith({
+    String? id,
+    String? establishmentId,
+    String? userId,
+    String? userName,
+    String? userEmail,
+    String? userImage,
+    double? rating,
+    String? comment,
+    DateTime? createdAt,
+    List<String>? images,
+    bool? isSynced,
+  }) {
+    return Review(
+      id: id ?? this.id,
+      establishmentId: establishmentId ?? this.establishmentId,
+      userId: userId ?? this.userId,
+      userName: userName ?? this.userName,
+      userEmail: userEmail ?? this.userEmail,
+      userImage: userImage ?? this.userImage,
+      rating: rating ?? this.rating,
+      comment: comment ?? this.comment,
+      createdAt: createdAt ?? this.createdAt,
+      images: images ?? this.images,
+      isSynced: isSynced ?? this.isSynced,
+    );
+  }
 }

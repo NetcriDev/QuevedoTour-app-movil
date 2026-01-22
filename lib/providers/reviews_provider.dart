@@ -21,12 +21,17 @@ class ReviewsProvider with ChangeNotifier {
     return sum / _reviews.length;
   }
 
-  Future<void> loadReviews(String establishmentId) async {
+  Future<void> loadReviews(String establishmentId, {String? sessionToken}) async {
     _isLoading = true;
     _errorMessage = null;
     notifyListeners();
 
     try {
+      // If we have a token, try to sync any unsynced reviews first
+      if (sessionToken != null) {
+        await syncUnsyncedReviews(sessionToken);
+      }
+
       // Try to load from local first (for offline support)
       final localReviewsData = await _localStorage.getReviewsByEstablishment(establishmentId);
       if (localReviewsData.isNotEmpty) {
@@ -38,10 +43,11 @@ class ReviewsProvider with ChangeNotifier {
       final apiReviews = await _reviewsService.getReviews(establishmentId);
       
       if (apiReviews.isNotEmpty) {
-        _reviews = apiReviews;
+        // Mark API reviews as synced explicitly
+        _reviews = apiReviews.map((r) => r.copyWith(isSynced: true)).toList();
         
         // Update local cache
-        for (var review in apiReviews) {
+        for (var review in _reviews) {
           await _localStorage.saveReview(review.toJson());
         }
       }
@@ -126,11 +132,16 @@ class ReviewsProvider with ChangeNotifier {
   }
 
   Future<void> syncUnsyncedReviews(String sessionToken) async {
+    debugPrint('Checking for unsynced reviews...');
+    debugPrint('Session token starts with: ${sessionToken.substring(0, 7)}...');
     final unsynced = await _localStorage.getUnsyncedReviews();
+    debugPrint('Found ${unsynced.length} unsynced reviews');
+    
     if (unsynced.isEmpty) return;
 
     for (var reviewMap in unsynced) {
       final review = Review.fromJson(reviewMap);
+      debugPrint('Syncing review: ${review.id} for establishment: ${review.establishmentId}');
       try {
         final syncedReview = await _reviewsService.createReview(
           establishmentId: review.establishmentId,
@@ -142,16 +153,22 @@ class ReviewsProvider with ChangeNotifier {
         );
 
         if (syncedReview != null) {
-          // Delete temporary local review and save synced one
+          debugPrint('Review ${review.id} synced successfully, now ID is ${syncedReview.id}');
+          // Mark as synced before saving
+          final reviewToSave = syncedReview.copyWith(isSynced: true);
+          
+          // Delete temporary local review (by original ID) and save synced one
           await _localStorage.deleteReview(review.id);
-          await _localStorage.saveReview(syncedReview.toJson());
+          await _localStorage.saveReview(reviewToSave.toJson());
           
           // Update in-memory list if it contains the offline version
           final index = _reviews.indexWhere((r) => r.id == review.id);
           if (index != -1) {
-            _reviews[index] = syncedReview;
+            _reviews[index] = reviewToSave;
             notifyListeners();
           }
+        } else {
+          debugPrint('Failed to sync review ${review.id}: Server returned null');
         }
       } catch (e) {
         debugPrint('Failed to sync review ${review.id}: $e');

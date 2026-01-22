@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import '../providers/auth_provider.dart';
 import '../providers/reviews_provider.dart';
 import 'review_item_widget.dart';
 
@@ -18,7 +19,9 @@ class _ReviewListWidgetState extends State<ReviewListWidget> {
     super.initState();
     // Load reviews when the widget is initialized
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      context.read<ReviewsProvider>().loadReviews(widget.establishmentId);
+      final authProvider = context.read<AuthProvider>();
+      final sessionToken = authProvider.isAuthenticated ? authProvider.currentUser.sessionToken : null;
+      context.read<ReviewsProvider>().loadReviews(widget.establishmentId, sessionToken: sessionToken);
     });
   }
 
