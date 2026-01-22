@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/app_provider.dart';
 import '../providers/auth_provider.dart';
+import '../providers/reviews_provider.dart';
 import '../config/theme.dart';
 import 'home_screen.dart';
 import 'package:flutter_staggered_animations/flutter_staggered_animations.dart';
@@ -49,6 +50,13 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
       appProvider.initData(), // Load app data
       Future.delayed(const Duration(seconds: 3)), // Minimum splash time
     ]);
+
+    // If authenticated, sync pending reviews from local storage
+    if (authProvider.isAuthenticated && authProvider.currentUser.sessionToken != null) {
+      final reviewsProvider = Provider.of<ReviewsProvider>(context, listen: false);
+      // We don't need to await this to block the splash, it can happen in background
+      reviewsProvider.syncUnsyncedReviews(authProvider.currentUser.sessionToken!);
+    }
 
     if (!mounted) return;
 
