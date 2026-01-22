@@ -128,6 +128,7 @@ class AuthProvider with ChangeNotifier {
         _errorMessage = null;
         _isLoading = false;
         notifyListeners();
+        
         return true;
       } else {
         _errorMessage = response.message;
