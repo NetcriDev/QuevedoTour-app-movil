@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import 'providers/app_provider.dart';
 import 'config/theme.dart';
 import 'screens/home_screen.dart';
+import 'screens/splash_screen.dart';
 import 'screens/detail_screen.dart';
 import 'screens/admin/admin_panel.dart';
 
@@ -25,7 +26,7 @@ class QuevedoTourApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MultiProvider(
       providers: [
-        ChangeNotifierProvider(create: (_) => AppProvider()..initData()),
+        ChangeNotifierProvider(create: (_) => AppProvider()),
       ],
       child: MaterialApp(
         title: 'QuevedoTour',
@@ -33,8 +34,9 @@ class QuevedoTourApp extends StatelessWidget {
         theme: AppTheme.lightTheme,
         darkTheme: AppTheme.darkTheme,
         themeMode: ThemeMode.system,
-        home: const HomeScreen(),
+        home: const SplashScreen(),
         routes: {
+          '/home': (context) => const HomeScreen(),
           '/admin': (context) => const AdminPanel(),
         },
       ),

@@ -15,8 +15,8 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-  int _currentIndex = 0;
-
+  // We'll manage the index via AppProvider
+  
   final List<Widget> _tabs = [
     const HomeTab(),
     const CategoriesTab(),
@@ -27,20 +27,18 @@ class _HomeScreenState extends State<HomeScreen> {
 
   @override
   Widget build(BuildContext context) {
-    // Determine colors based on theme
+    final provider = Provider.of<AppProvider>(context);
     final isDark = Theme.of(context).brightness == Brightness.dark;
     
     return Scaffold(
       body: IndexedStack(
-        index: _currentIndex,
+        index: provider.currentTabIndex,
         children: _tabs,
       ),
       bottomNavigationBar: NavigationBar(
-        selectedIndex: _currentIndex,
+        selectedIndex: provider.currentTabIndex,
         onDestinationSelected: (index) {
-          setState(() {
-            _currentIndex = index;
-          });
+          provider.setTabIndex(index);
         },
         destinations: const [
           NavigationDestination(
