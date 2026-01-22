@@ -43,11 +43,9 @@ class HomeTab extends StatelessWidget {
                     ),
                     onChanged: (val) {
                       // Implement search navigation or overlay
-                      // For now simple log
                     },
                     onSubmitted: (val) {
                        provider.search(val);
-                       // Navigate to search results or show here
                     },
                   ),
                 ),
@@ -102,6 +100,37 @@ class HomeTab extends StatelessWidget {
                       ),
                     );
                   },
+                ),
+              ),
+            ),
+
+            // Quick Categories
+            SliverToBoxAdapter(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(vertical: 20.0, horizontal: 16.0),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    ...provider.categories.take(3).map((category) => Flexible(
+                      child: _buildCategoryItem(
+                        context, 
+                        category.name, 
+                        category.icon,
+                        () {
+                          // Optional: Filter by this category
+                        }
+                      ),
+                    )),
+                    Flexible(
+                      child: _buildCategoryItem(
+                        context, 
+                        'Ver todos', 
+                        Icons.grid_view_rounded,
+                        () => provider.setTabIndex(1), // Index 1 is CategoriesTab
+                        isSeeAll: true,
+                      ),
+                    ),
+                  ],
                 ),
               ),
             ),
@@ -201,5 +230,57 @@ class HomeTab extends StatelessWidget {
         );
       },
     );
+  }
+
+  Widget _buildCategoryItem(BuildContext context, String title, IconData icon, VoidCallback onTap, {bool isSeeAll = false}) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+
+    return GestureDetector(
+      onTap: onTap,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 4.0),
+        child: Column(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: isSeeAll 
+                    ? AppTheme.primaryColor.withOpacity(0.1) 
+                    : (isDark ? Colors.white.withOpacity(0.1) : Colors.white),
+                borderRadius: BorderRadius.circular(15),
+                boxShadow: isDark ? [] : [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.05),
+                    blurRadius: 10,
+                    offset: const Offset(0, 5),
+                  ),
+                ],
+                border: isDark ? Border.all(color: Colors.white.withOpacity(0.1)) : null,
+              ),
+              child: Icon(
+                icon,
+                color: isSeeAll ? AppTheme.primaryColor : (isDark ? AppTheme.accentColor : AppTheme.primaryColor),
+                size: 28,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              title,
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: 11,
+                fontWeight: isSeeAll ? FontWeight.bold : FontWeight.w500,
+                color: theme.textTheme.bodyMedium?.color,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   }
 }

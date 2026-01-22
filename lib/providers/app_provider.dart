@@ -17,6 +17,7 @@ class AppProvider with ChangeNotifier {
   bool _isDarkMode = false; 
   bool _isAdminAuthenticated = false;
   String? _sessionToken;
+  int _currentTabIndex = 0;
 
   List<Category> get categories => _categories;
   List<AppBanner> get banners => _banners;
@@ -28,6 +29,7 @@ class AppProvider with ChangeNotifier {
   bool get isDarkMode => _isDarkMode;
   bool get isAdminAuthenticated => _isAdminAuthenticated;
   String? get sessionToken => _sessionToken;
+  int get currentTabIndex => _currentTabIndex;
 
   // Search Results
   List<Establishment> _searchResults = [];
@@ -220,6 +222,11 @@ class AppProvider with ChangeNotifier {
   void logout() {
     _isAdminAuthenticated = false;
     _sessionToken = null;
+    notifyListeners();
+  }
+
+  void setTabIndex(int index) {
+    _currentTabIndex = index;
     notifyListeners();
   }
 }
