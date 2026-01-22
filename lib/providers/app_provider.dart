@@ -34,11 +34,20 @@ class AppProvider with ChangeNotifier {
   // Search Results
   List<Establishment> _searchResults = [];
 
+  String? _errorMessage;
+  bool _hasNetworkError = false;
+
+  String? get errorMessage => _errorMessage;
+  bool get hasNetworkError => _hasNetworkError;
+
   Future<void> initData() async {
     _isLoading = true;
+    _hasNetworkError = false;
+    _errorMessage = null;
     notifyListeners();
 
     try {
+      // Try to load data with timeout handling
       final futures = await Future.wait([
         _apiService.getCategories(),
         _apiService.getAllSubCategories(),
@@ -46,7 +55,22 @@ class AppProvider with ChangeNotifier {
         _apiService.getRecentEstablishments(),
         _apiService.getEstablishments(),
         _localStorage.getFavorites(),
-      ]);
+      ]).timeout(
+        const Duration(seconds: 35),
+        onTimeout: () {
+          debugPrint('Data loading timed out, using empty data');
+          _hasNetworkError = true;
+          _errorMessage = 'Tiempo de espera agotado. Verifica tu conexión.';
+          return [
+            <Category>[],
+            <SubCategory>[],
+            <AppBanner>[],
+            <Establishment>[],
+            <Establishment>[],
+            <String>[],
+          ];
+        },
+      );
 
       List<Category> rawCategories = futures[0] as List<Category>;
       List<SubCategory> allSubCategories = futures[1] as List<SubCategory>;
@@ -58,7 +82,7 @@ class AppProvider with ChangeNotifier {
       debugPrint("--- DATA LOADED ---");
       debugPrint("Categories: ${rawCategories.length}");
       debugPrint("SubCategories: ${allSubCategories.length}");
-      debugPrint("Banners: ${_banners.length}"); // Check if this is 0
+      debugPrint("Banners: ${_banners.length}");
       debugPrint("Featured Est: ${_featuredEstablishments.length}");
       debugPrint("All Est: ${_allEstablishments.length}");
 
@@ -78,12 +102,25 @@ class AppProvider with ChangeNotifier {
         );
       }).toList();
 
+      // Check if we got any data
+      if (rawCategories.isEmpty && _allEstablishments.isEmpty && _banners.isEmpty) {
+        _hasNetworkError = true;
+        _errorMessage = 'No se pudo cargar la información. Verifica tu conexión.';
+      }
+
     } catch (e) {
       debugPrint("Error loading data from API: $e");
+      _hasNetworkError = true;
+      _errorMessage = 'Error al cargar datos. Intenta nuevamente.';
     } finally {
       _isLoading = false;
       notifyListeners();
     }
+  }
+
+  /// Retry loading data
+  Future<void> retryLoadData() async {
+    await initData();
   }
 
   Future<void> toggleFavorite(String id) async {

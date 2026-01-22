@@ -32,22 +32,18 @@ class QuevedoTourApp extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => AuthProvider()),
         ChangeNotifierProvider(create: (_) => AppProvider()),
       ],
-      child: Consumer<AuthProvider>(
-        builder: (context, authProvider, child) {
-          return MaterialApp(
-            title: 'QuevedoTour',
-            debugShowCheckedModeBanner: false,
-            theme: AppTheme.lightTheme,
-            darkTheme: AppTheme.darkTheme,
-            themeMode: ThemeMode.system,
-            home: const SplashScreen(),
-            routes: {
-              '/home': (context) => const HomeScreen(),
-              '/admin': (context) => const AdminPanel(),
-              '/login': (context) => const LoginScreen(),
-              '/register': (context) => const RegisterScreen(),
-            },
-          );
+      child: MaterialApp(
+        title: 'QuevedoTour',
+        debugShowCheckedModeBanner: false,
+        theme: AppTheme.lightTheme,
+        darkTheme: AppTheme.darkTheme,
+        themeMode: ThemeMode.system,
+        home: const SplashScreen(),
+        routes: {
+          '/home': (context) => const HomeScreen(),
+          '/admin': (context) => const AdminPanel(),
+          '/login': (context) => const LoginScreen(),
+          '/register': (context) => const RegisterScreen(),
         },
       ),
     );
