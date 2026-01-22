@@ -19,11 +19,12 @@ class LocalStorage {
     String path = join(await getDatabasesPath(), 'quevedotour.db');
     return await openDatabase(
       path,
-      version: 3,
+      version: 4,
       onCreate: (db, version) async {
         await db.execute('CREATE TABLE favorites(id TEXT PRIMARY KEY)');
         await _createReviewsTable(db);
         await _createCoreTables(db);
+        await _createNotificationsTable(db);
       },
       onUpgrade: (db, oldVersion, newVersion) async {
         if (oldVersion < 2) {
@@ -31,6 +32,9 @@ class LocalStorage {
         }
         if (oldVersion < 3) {
           await _createCoreTables(db);
+        }
+        if (oldVersion < 4) {
+          await _createNotificationsTable(db);
         }
       },
     );
@@ -90,6 +94,19 @@ class LocalStorage {
         id TEXT PRIMARY KEY,
         image TEXT,
         title TEXT
+      )
+    ''');
+  }
+
+  Future<void> _createNotificationsTable(Database db) async {
+    await db.execute('''
+      CREATE TABLE notifications(
+        id TEXT PRIMARY KEY,
+        title TEXT,
+        body TEXT,
+        timestamp TEXT,
+        is_read INTEGER DEFAULT 0,
+        payload TEXT
       )
     ''');
   }
@@ -213,5 +230,27 @@ class LocalStorage {
   Future<void> markReviewAsSynced(String id) async {
     final db = await database;
     await db.update('reviews', {'is_synced': 1}, where: 'id = ?', whereArgs: [id]);
+  }
+
+  // --- Notifications Methods ---
+
+  Future<void> saveNotification(Map<String, dynamic> notificationJson) async {
+    final db = await database;
+    await db.insert('notifications', notificationJson, conflictAlgorithm: ConflictAlgorithm.replace);
+  }
+
+  Future<List<Map<String, dynamic>>> getNotifications() async {
+    final db = await database;
+    return await db.query('notifications', orderBy: 'timestamp DESC');
+  }
+
+  Future<void> markNotificationAsRead(String id) async {
+    final db = await database;
+    await db.update('notifications', {'is_read': 1}, where: 'id = ?', whereArgs: [id]);
+  }
+
+  Future<void> clearNotifications() async {
+    final db = await database;
+    await db.delete('notifications');
   }
 }

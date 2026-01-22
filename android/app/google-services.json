@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "373958438456",
+    "project_id": "quevedotour",
+    "storage_bucket": "quevedotour.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:373958438464:android:2f25a4b23773fe0b6039a5",
+        "android_client_info": {
+          "package_name": "com.netcri.quevedotour.quevedotour"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAGfPl6wOLub3cnualIzP3O5_MEXOXbTvU"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+} 

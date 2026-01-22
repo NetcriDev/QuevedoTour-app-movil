@@ -7,6 +7,7 @@ import '../config/theme.dart';
 import '../providers/app_provider.dart';
 import '../providers/auth_provider.dart';
 import '../providers/reviews_provider.dart';
+import '../services/share_service.dart';
 import '../widgets/review_list_widget.dart';
 import '../widgets/add_review_dialog.dart';
 import '../utils/auth_guard.dart';
@@ -56,6 +57,10 @@ class DetailScreen extends StatelessWidget {
                     onPressed: () => provider.toggleFavorite(establishment.id),
                   );
                 },
+              ),
+              IconButton(
+                icon: const Icon(Icons.share, color: Colors.white),
+                onPressed: () => ShareService.shareEstablishment(establishment),
               ),
             ],
           ),
