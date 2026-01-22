@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../providers/auth_provider.dart';
+import '../../providers/reviews_provider.dart';
 
 class RegisterScreen extends StatefulWidget {
   const RegisterScreen({Key? key}) : super(key: key);
@@ -62,6 +63,14 @@ class _RegisterScreenState extends State<RegisterScreen> {
       
       // Navigate back or to home
       if (authProvider.isAuthenticated) {
+        // Trigger review sync
+        if (mounted) {
+          final reviewsProvider = Provider.of<ReviewsProvider>(context, listen: false);
+          if (authProvider.currentUser.sessionToken != null) {
+            reviewsProvider.syncUnsyncedReviews(authProvider.currentUser.sessionToken!);
+          }
+        }
+        
         // Auto-logged in
         Navigator.pop(context, true);
       } else {

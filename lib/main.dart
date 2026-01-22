@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'providers/app_provider.dart';
 import 'providers/auth_provider.dart';
+import 'providers/connectivity_provider.dart';
+import 'providers/reviews_provider.dart';
 import 'config/theme.dart';
 import 'screens/home_screen.dart';
 import 'screens/splash_screen.dart';
@@ -30,7 +32,9 @@ class QuevedoTourApp extends StatelessWidget {
     return MultiProvider(
       providers: [
         ChangeNotifierProvider(create: (_) => AuthProvider()),
+        ChangeNotifierProvider(create: (_) => ConnectivityProvider()),
         ChangeNotifierProvider(create: (_) => AppProvider()),
+        ChangeNotifierProvider(create: (_) => ReviewsProvider()),
       ],
       child: MaterialApp(
         title: 'QuevedoTour',

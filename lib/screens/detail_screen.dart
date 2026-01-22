@@ -5,6 +5,11 @@ import 'package:provider/provider.dart';
 import '../models/models.dart';
 import '../config/theme.dart';
 import '../providers/app_provider.dart';
+import '../providers/auth_provider.dart';
+import '../providers/reviews_provider.dart';
+import '../widgets/review_list_widget.dart';
+import '../widgets/add_review_dialog.dart';
+import '../utils/auth_guard.dart';
 
 class DetailScreen extends StatelessWidget {
   final Establishment establishment;
@@ -77,14 +82,21 @@ class DetailScreen extends StatelessWidget {
                             color: Colors.amber,
                             borderRadius: BorderRadius.circular(12),
                           ),
-                          child: Row(
-                            children: [
-                              const Icon(Icons.star, size: 16, color: Colors.white),
-                              Text(
-                                " ${establishment.rating}",
-                                style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.white),
-                              ),
-                            ],
+                          child: Consumer<ReviewsProvider>(
+                            builder: (context, revProvider, _) {
+                              final displayRating = revProvider.reviews.isNotEmpty 
+                                  ? revProvider.averageRating.toStringAsFixed(1)
+                                  : establishment.rating.toStringAsFixed(1);
+                              return Row(
+                                children: [
+                                  const Icon(Icons.star, size: 16, color: Colors.white),
+                                  Text(
+                                    " $displayRating",
+                                    style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.white),
+                                  ),
+                                ],
+                              );
+                            },
                           ),
                         ),
                       ],
@@ -175,6 +187,39 @@ class DetailScreen extends StatelessWidget {
                     ),
                     const SizedBox(height: 8),
                     Text(establishment.description),
+                    const SizedBox(height: 24),
+
+                    // Reviews Section
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        const Text(
+                          "Reseñas",
+                          style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                        ),
+                        TextButton.icon(
+                          onPressed: () async {
+                            final authProvider = context.read<AuthProvider>();
+                            final canProceed = await AuthGuard.requireAuth(
+                              context, 
+                              authProvider,
+                              message: 'Inicia sesión para compartir tu experiencia.'
+                            );
+                            
+                            if (canProceed && context.mounted) {
+                              showDialog(
+                                context: context,
+                                builder: (context) => AddReviewDialog(establishmentId: establishment.id),
+                              );
+                            }
+                          },
+                          icon: const Icon(Icons.add_comment),
+                          label: const Text("Escribir reseña"),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 8),
+                    ReviewListWidget(establishmentId: establishment.id),
                     const SizedBox(height: 50),
                   ],
                 ),

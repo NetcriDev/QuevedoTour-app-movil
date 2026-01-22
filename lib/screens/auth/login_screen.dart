@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../providers/auth_provider.dart';
+import '../../providers/reviews_provider.dart';
 import '../../config/theme.dart';
 
 class LoginScreen extends StatefulWidget {
@@ -38,6 +39,14 @@ class _LoginScreenState extends State<LoginScreen> {
     if (!mounted) return;
 
     if (success) {
+      // Trigger review sync if authenticated
+      if (mounted) {
+        final reviewsProvider = Provider.of<ReviewsProvider>(context, listen: false);
+        if (authProvider.currentUser.sessionToken != null) {
+          reviewsProvider.syncUnsyncedReviews(authProvider.currentUser.sessionToken!);
+        }
+      }
+      
       // Login successful, navigate back or to home
       Navigator.pop(context, true);
     } else {
