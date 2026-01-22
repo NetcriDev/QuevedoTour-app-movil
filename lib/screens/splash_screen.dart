@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/app_provider.dart';
 import '../providers/auth_provider.dart';
+import '../providers/notifications_provider.dart';
 import '../providers/reviews_provider.dart';
 import '../config/theme.dart';
 import 'home_screen.dart';
@@ -44,10 +45,12 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
     final appProvider = Provider.of<AppProvider>(context, listen: false);
     final authProvider = Provider.of<AuthProvider>(context, listen: false);
     
-    // We wait for: auth init, data init, AND minimum splash time
+    // We wait for: auth init, data init, notification init AND minimum splash time
     await Future.wait([
       authProvider.init(), // Initialize auth session
       appProvider.initData(), // Load app data
+      Provider.of<NotificationsProvider>(context, listen: false)
+          .initNotifications(authProvider.currentUser.id), // FCM init
       Future.delayed(const Duration(seconds: 3)), // Minimum splash time
     ]);
 

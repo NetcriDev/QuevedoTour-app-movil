@@ -2,8 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../providers/app_provider.dart';
 import '../../providers/auth_provider.dart';
-import '../../utils/auth_guard.dart';
+import '../../providers/notifications_provider.dart';
 import '../admin/admin_panel.dart';
+import '../notifications_screen.dart';
 
 class ProfileTab extends StatelessWidget {
   const ProfileTab({super.key});
@@ -230,6 +231,61 @@ class ProfileTab extends StatelessWidget {
               appProvider.setTabIndex(2); // Favorites tab index
             },
           ),
+        ),
+        
+        const SizedBox(height: 8),
+        
+        // Notifications
+        Consumer<NotificationsProvider>(
+          builder: (context, notificationsProvider, child) {
+            final unreadCount = notificationsProvider.unreadCount;
+            return Card(
+              child: ListTile(
+                leading: Stack(
+                  clipBehavior: Clip.none,
+                  children: [
+                    const Icon(Icons.notifications_outlined),
+                    if (unreadCount > 0)
+                      Positioned(
+                        right: -8,
+                        top: -8,
+                        child: Container(
+                          padding: const EdgeInsets.all(4),
+                          decoration: const BoxDecoration(
+                            color: Colors.red,
+                            shape: BoxShape.circle,
+                          ),
+                          constraints: const BoxConstraints(
+                            minWidth: 16,
+                            minHeight: 16,
+                          ),
+                          child: Text(
+                            unreadCount > 99 ? '99+' : unreadCount.toString(),
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 10,
+                              fontWeight: FontWeight.bold,
+                            ),
+                            textAlign: TextAlign.center,
+                          ),
+                        ),
+                      ),
+                  ],
+                ),
+                title: const Text("Notificaciones"),
+                subtitle: unreadCount > 0
+                    ? Text("$unreadCount sin leer")
+                    : null,
+                trailing: const Icon(Icons.chevron_right),
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (_) => const NotificationsScreen()),
+                  );
+                },
+              ),
+            );
+          },
         ),
         
         const SizedBox(height: 8),
