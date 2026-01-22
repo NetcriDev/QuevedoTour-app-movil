@@ -7,14 +7,48 @@ class ApiService {
   final Dio _dio = Dio();
 
   ApiService() {
-    _dio.options.baseUrl = AppConstants.apiBaseUrl; // e.g. http://10.10.10.20:3000/api
-    _dio.options.connectTimeout = const Duration(seconds: 15);
-    _dio.options.receiveTimeout = const Duration(seconds: 15);
+    _dio.options.baseUrl = AppConstants.apiBaseUrl;
+    // Increased timeouts for slower networks
+    _dio.options.connectTimeout = const Duration(seconds: 30);
+    _dio.options.receiveTimeout = const Duration(seconds: 30);
+    _dio.options.sendTimeout = const Duration(seconds: 30);
+    
+    // Add retry interceptor for failed requests
+    _dio.interceptors.add(
+      InterceptorsWrapper(
+        onError: (error, handler) async {
+          if (_shouldRetry(error)) {
+            try {
+              debugPrint('Retrying request: ${error.requestOptions.uri}');
+              final response = await _dio.fetch(error.requestOptions);
+              return handler.resolve(response);
+            } catch (e) {
+              return handler.next(error);
+            }
+          }
+          return handler.next(error);
+        },
+      ),
+    );
     
     if (kDebugMode) {
-      _dio.interceptors.add(LogInterceptor(responseBody: true, requestBody: true));
+      _dio.interceptors.add(LogInterceptor(
+        responseBody: true,
+        requestBody: true,
+        error: true,
+      ));
     }
   }
+
+  /// Determines if a request should be retried
+  bool _shouldRetry(DioException error) {
+    // Retry on timeout or connection errors (but not on 4xx/5xx errors)
+    return error.type == DioExceptionType.connectionTimeout ||
+        error.type == DioExceptionType.sendTimeout ||
+        error.type == DioExceptionType.receiveTimeout ||
+        error.type == DioExceptionType.connectionError;
+  }
+
 
   // --- GET METHODS ---
 
